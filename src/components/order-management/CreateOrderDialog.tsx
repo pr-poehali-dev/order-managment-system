@@ -31,6 +31,7 @@ export interface OrderData {
   deliveryDates: Date[];
   nextDeliveryDate: Date | undefined;
   nextDeliveryTime: string;
+  safetyStockDays: number;
   needs: {
     buns: number;
     patties: number;
@@ -109,6 +110,7 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
   const [selectedDeliveryDates, setSelectedDeliveryDates] = useState<Date[]>([]);
   const [nextDeliveryDate, setNextDeliveryDate] = useState<Date | undefined>();
   const [nextDeliveryTime, setNextDeliveryTime] = useState<string>('10:00');
+  const [safetyStockDays, setSafetyStockDays] = useState<number>(1);
   const [calculatedNeeds, setCalculatedNeeds] = useState<OrderData['needs'] | null>(null);
 
   const handleConfirmInventory = () => {
@@ -157,6 +159,9 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
       (nextDeliveryDate.getTime() - selectedDeliveryDates[selectedDeliveryDates.length - 1].getTime()) / (1000 * 60 * 60 * 24)
     );
 
+    // Добавляем страховой запас к количеству дней
+    const totalDays = daysToNextDelivery + safetyStockDays;
+
     const dailyConsumption = {
       buns: 50,
       patties: 45,
@@ -167,12 +172,12 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
     };
 
     const needs = {
-      buns: Math.max(0, dailyConsumption.buns * daysToNextDelivery - mockInventory.items.buns),
-      patties: Math.max(0, dailyConsumption.patties * daysToNextDelivery - mockInventory.items.patties),
-      tomatoes: Math.max(0, dailyConsumption.tomatoes * daysToNextDelivery - mockInventory.items.tomatoes),
-      cucumbers: Math.max(0, dailyConsumption.cucumbers * daysToNextDelivery - mockInventory.items.cucumbers),
-      fries: Math.max(0, dailyConsumption.fries * daysToNextDelivery - mockInventory.items.fries),
-      cola: Math.max(0, dailyConsumption.cola * daysToNextDelivery - mockInventory.items.cola)
+      buns: Math.max(0, Math.ceil(dailyConsumption.buns * totalDays - mockInventory.items.buns)),
+      patties: Math.max(0, Math.ceil(dailyConsumption.patties * totalDays - mockInventory.items.patties)),
+      tomatoes: Math.max(0, Math.ceil(dailyConsumption.tomatoes * totalDays - mockInventory.items.tomatoes)),
+      cucumbers: Math.max(0, Math.ceil(dailyConsumption.cucumbers * totalDays - mockInventory.items.cucumbers)),
+      fries: Math.max(0, Math.ceil(dailyConsumption.fries * totalDays - mockInventory.items.fries)),
+      cola: Math.max(0, Math.ceil(dailyConsumption.cola * totalDays - mockInventory.items.cola))
     };
 
     setCalculatedNeeds(needs);
@@ -186,6 +191,7 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
       deliveryDates: selectedDeliveryDates,
       nextDeliveryDate,
       nextDeliveryTime,
+      safetyStockDays,
       needs: calculatedNeeds,
       inventoryDate: mockInventory.lastInventoryDate
     };
@@ -207,6 +213,7 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
     setSelectedDeliveryDates([]);
     setNextDeliveryDate(undefined);
     setNextDeliveryTime('10:00');
+    setSafetyStockDays(1);
     setCalculatedNeeds(null);
   };
 
@@ -478,6 +485,41 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
                     )}
                   </div>
                 </div>
+
+                {/* Страховой запас */}
+                {selectedDeliveryDates.length > 0 && nextDeliveryDate && (
+                  <Card className="border-2 border-amber-200 bg-amber-50/50">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Icon name="Shield" className="text-amber-600" size={18} />
+                        Страховой запас (опционально)
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <p className="text-xs text-muted-foreground">
+                        Дополнительный запас товаров на случай непредвиденных обстоятельств
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <Icon name="Calendar" className="text-amber-600" size={18} />
+                        <Input
+                          type="number"
+                          min="1"
+                          max="30"
+                          step="0.1"
+                          value={safetyStockDays}
+                          onChange={(e) => setSafetyStockDays(parseFloat(e.target.value) || 1)}
+                          className="flex-1"
+                        />
+                        <span className="text-sm font-medium whitespace-nowrap">дней</span>
+                      </div>
+                      <div className="p-2 bg-white rounded-lg">
+                        <p className="text-xs text-muted-foreground">
+                          Текущий запас: <strong className="text-amber-600">{safetyStockDays} {safetyStockDays === 1 ? 'день' : safetyStockDays < 5 ? 'дня' : 'дней'}</strong>
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Расчет потребностей */}
                 {selectedDeliveryDates.length > 0 && nextDeliveryDate && (
