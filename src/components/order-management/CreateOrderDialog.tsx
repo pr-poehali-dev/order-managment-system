@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import Icon from '@/components/ui/icon';
 
 interface Supplier {
@@ -29,6 +30,7 @@ export interface OrderData {
   supplier: string;
   deliveryDates: Date[];
   nextDeliveryDate: Date | undefined;
+  nextDeliveryTime: string;
   needs: {
     buns: number;
     patties: number;
@@ -100,6 +102,7 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedDeliveryDates, setSelectedDeliveryDates] = useState<Date[]>([]);
   const [nextDeliveryDate, setNextDeliveryDate] = useState<Date | undefined>();
+  const [nextDeliveryTime, setNextDeliveryTime] = useState<string>('10:00');
   const [calculatedNeeds, setCalculatedNeeds] = useState<OrderData['needs'] | null>(null);
 
   const handleConfirmInventory = () => {
@@ -176,6 +179,7 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
       supplier: selectedSupplier.name,
       deliveryDates: selectedDeliveryDates,
       nextDeliveryDate,
+      nextDeliveryTime,
       needs: calculatedNeeds,
       inventoryDate: mockInventory.lastInventoryDate
     };
@@ -196,6 +200,7 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
     setSelectedSupplier(null);
     setSelectedDeliveryDates([]);
     setNextDeliveryDate(undefined);
+    setNextDeliveryTime('10:00');
     setCalculatedNeeds(null);
   };
 
@@ -369,6 +374,12 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
                       </Badge>
                       <p className="text-sm font-semibold">Выберите даты поставок для заказа</p>
                     </div>
+                    <div className="p-3 bg-blue-50 rounded-lg mb-3">
+                      <p className="text-xs text-muted-foreground">
+                        <Icon name="Info" className="inline mr-1" size={12} />
+                        Фиолетовым выделены даты из графика поставок. Оранжевым — выбранные даты для заказа.
+                      </p>
+                    </div>
                     <Calendar
                       mode="single"
                       onSelect={handleDateSelect}
@@ -413,16 +424,27 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
                       <Badge className="bg-gradient-to-r from-gradient-blue to-cyan-500 text-white">
                         Шаг 2
                       </Badge>
-                      <p className="text-sm font-semibold">Выберите дату следующей поставки</p>
+                      <p className="text-sm font-semibold">Выберите дату и время следующей поставки</p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      До этой даты должно хватить товаров из текущего заказа
+                      До этого момента должно хватить товаров из заказа.<br />
+                      <strong>Обычно это следующая по расписанию поставка.</strong>
                     </p>
                     <Calendar
                       mode="single"
                       selected={nextDeliveryDate}
                       onSelect={setNextDeliveryDate}
                       className="rounded-lg border"
+                      modifiers={{
+                        availableDay: selectedSupplier.deliveryDays
+                      }}
+                      modifiersStyles={{
+                        availableDay: {
+                          backgroundColor: 'hsl(var(--primary))',
+                          color: 'white',
+                          fontWeight: 'bold'
+                        }
+                      }}
                       disabled={(date) => {
                         if (selectedDeliveryDates.length === 0) return true;
                         const lastSelected = selectedDeliveryDates[selectedDeliveryDates.length - 1];
@@ -430,11 +452,22 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
                       }}
                     />
                     {nextDeliveryDate && (
-                      <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
-                        <p className="text-xs font-semibold text-muted-foreground mb-1">Следующая поставка:</p>
-                        <p className="text-lg font-bold text-gradient-blue">
-                          {nextDeliveryDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
-                        </p>
+                      <div className="space-y-3">
+                        <div className="flex gap-2 items-center">
+                          <Icon name="Clock" className="text-gradient-blue" size={18} />
+                          <Input
+                            type="time"
+                            value={nextDeliveryTime}
+                            onChange={(e) => setNextDeliveryTime(e.target.value)}
+                            className="flex-1"
+                          />
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                          <p className="text-xs font-semibold text-muted-foreground mb-1">Следующая поставка:</p>
+                          <p className="text-lg font-bold text-gradient-blue">
+                            {nextDeliveryDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} в {nextDeliveryTime}
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
