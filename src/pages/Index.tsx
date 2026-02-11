@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Calendar } from '@/components/ui/calendar';
 
 type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
 
@@ -17,6 +18,21 @@ interface Order {
   status: OrderStatus;
   items: number;
 }
+
+interface Delivery {
+  id: string;
+  orderId: string;
+  date: Date;
+  customer: string;
+  items: number;
+}
+
+const mockDeliveries: Delivery[] = [
+  { id: 'DEL-001', orderId: '#ORD-2024-003', date: new Date('2024-02-15'), customer: 'Елена Сидорова', items: 5 },
+  { id: 'DEL-002', orderId: '#ORD-2024-005', date: new Date('2024-02-18'), customer: 'Ольга Смирнова', items: 7 },
+  { id: 'DEL-003', orderId: '#ORD-2024-002', date: new Date('2024-02-20'), customer: 'Дмитрий Петров', items: 2 },
+  { id: 'DEL-004', orderId: '#ORD-2024-008', date: new Date('2024-02-22'), customer: 'Игорь Лебедев', items: 3 },
+];
 
 const mockOrders: Order[] = [
   { id: '#ORD-2024-001', customer: 'Анна Иванова', date: '2024-02-11', amount: 45800, status: 'completed', items: 3 },
@@ -42,6 +58,8 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [minAmount, setMinAmount] = useState('');
   const [maxAmount, setMaxAmount] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [deliveries] = useState<Delivery[]>(mockDeliveries);
 
   const filteredOrders = orders.filter(order => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -120,7 +138,50 @@ const Index = () => {
 
         </div>
 
-        <Card className="animate-slide-in shadow-xl border-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="animate-fade-in shadow-xl border-2">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold flex items-center gap-2">
+                <Icon name="Calendar" className="text-gradient-purple" size={24} />
+                Календарь поставок
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                className="rounded-lg border"
+                modifiers={{
+                  delivery: deliveries.map(d => d.date)
+                }}
+                modifiersStyles={{
+                  delivery: {
+                    backgroundColor: 'hsl(var(--primary))',
+                    color: 'white',
+                    fontWeight: 'bold'
+                  }
+                }}
+              />
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-muted-foreground">Предстоящие поставки:</p>
+                {deliveries.slice(0, 3).map((delivery) => (
+                  <div key={delivery.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 hover:shadow-md transition-all">
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm">{delivery.customer}</p>
+                      <p className="text-xs text-muted-foreground">{delivery.orderId}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gradient-purple">{delivery.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</p>
+                      <p className="text-xs text-muted-foreground">{delivery.items} шт</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+        <Card className="lg:col-span-2 animate-slide-in shadow-xl border-2">
           <CardHeader>
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <CardTitle className="text-2xl font-bold">Все заказы</CardTitle>
@@ -233,6 +294,7 @@ const Index = () => {
             </div>
           </CardContent>
         </Card>
+        </div>
       </div>
     </div>
   );
