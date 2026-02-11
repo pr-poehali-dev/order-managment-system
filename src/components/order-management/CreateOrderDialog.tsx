@@ -53,39 +53,45 @@ const mockSuppliers: Supplier[] = [
     id: 'SUP-001', 
     name: 'ООО "Поставщик-1"',
     deliveryDays: [
-      new Date('2024-02-15'),
-      new Date('2024-02-18'),
-      new Date('2024-02-22'),
-      new Date('2024-02-25'),
-      new Date('2024-03-01')
+      new Date('2026-02-15'),
+      new Date('2026-02-18'),
+      new Date('2026-02-22'),
+      new Date('2026-02-25'),
+      new Date('2026-03-01'),
+      new Date('2026-03-04'),
+      new Date('2026-03-08')
     ]
   },
   { 
     id: 'SUP-002', 
     name: 'ИП Иванов',
     deliveryDays: [
-      new Date('2024-02-14'),
-      new Date('2024-02-17'),
-      new Date('2024-02-21'),
-      new Date('2024-02-24'),
-      new Date('2024-02-28')
+      new Date('2026-02-14'),
+      new Date('2026-02-17'),
+      new Date('2026-02-21'),
+      new Date('2026-02-24'),
+      new Date('2026-02-28'),
+      new Date('2026-03-03'),
+      new Date('2026-03-07')
     ]
   },
   { 
     id: 'SUP-003', 
     name: 'ООО "Торговый Дом"',
     deliveryDays: [
-      new Date('2024-02-16'),
-      new Date('2024-02-20'),
-      new Date('2024-02-23'),
-      new Date('2024-02-27'),
-      new Date('2024-03-02')
+      new Date('2026-02-16'),
+      new Date('2026-02-20'),
+      new Date('2026-02-23'),
+      new Date('2026-02-27'),
+      new Date('2026-03-02'),
+      new Date('2026-03-06'),
+      new Date('2026-03-09')
     ]
   },
 ];
 
 const mockInventory: InventoryData = {
-  lastInventoryDate: '2024-02-10',
+  lastInventoryDate: '2026-02-10',
   items: {
     buns: 500,
     patties: 450,
