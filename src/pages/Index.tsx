@@ -76,19 +76,19 @@ const Index = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-scale-in">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-scale-in">
           <Card className="hover:shadow-xl transition-all hover:-translate-y-1 border-2 border-gradient-purple/20">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Общий доход</CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Ближайшая поставка</CardTitle>
               <div className="p-2 rounded-lg bg-gradient-to-br from-gradient-purple to-gradient-magenta">
-                <Icon name="DollarSign" className="text-white" size={20} />
+                <Icon name="Truck" className="text-white" size={20} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold bg-gradient-to-r from-gradient-purple to-gradient-magenta bg-clip-text text-transparent">
-                {totalRevenue.toLocaleString('ru-RU')} ₽
+                15 фев
               </div>
-              <p className="text-xs text-muted-foreground mt-1">+12.5% от прошлого месяца</p>
+              <p className="text-xs text-muted-foreground mt-1">Через 4 дня • Заказ #ORD-2024-003</p>
             </CardContent>
           </Card>
 
@@ -118,18 +118,6 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-xl transition-all hover:-translate-y-1 border-2 border-gradient-orange/20">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Средний чек</CardTitle>
-              <div className="p-2 rounded-lg bg-gradient-to-br from-gradient-orange to-amber-500">
-                <Icon name="TrendingUp" className="text-white" size={20} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-gradient-orange">{averageCheck.toLocaleString('ru-RU')} ₽</div>
-              <p className="text-xs text-muted-foreground mt-1">+8.2% от среднего</p>
-            </CardContent>
-          </Card>
         </div>
 
         <Card className="animate-slide-in shadow-xl border-2">
