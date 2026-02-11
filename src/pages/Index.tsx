@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar } from '@/components/ui/calendar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type OrderStatus = 'pending' | 'processing' | 'completed' | 'cancelled';
 
@@ -25,13 +26,16 @@ interface Delivery {
   date: Date;
   customer: string;
   items: number;
+  address: string;
+  phone: string;
+  notes?: string;
 }
 
 const mockDeliveries: Delivery[] = [
-  { id: 'DEL-001', orderId: '#ORD-2024-003', date: new Date('2024-02-15'), customer: 'Елена Сидорова', items: 5 },
-  { id: 'DEL-002', orderId: '#ORD-2024-005', date: new Date('2024-02-18'), customer: 'Ольга Смирнова', items: 7 },
-  { id: 'DEL-003', orderId: '#ORD-2024-002', date: new Date('2024-02-20'), customer: 'Дмитрий Петров', items: 2 },
-  { id: 'DEL-004', orderId: '#ORD-2024-008', date: new Date('2024-02-22'), customer: 'Игорь Лебедев', items: 3 },
+  { id: 'DEL-001', orderId: '#ORD-2024-003', date: new Date('2024-02-15'), customer: 'Елена Сидорова', items: 5, address: 'г. Москва, ул. Ленина, д. 15, кв. 42', phone: '+7 (999) 123-45-67', notes: 'Домофон 42К, звонить за час' },
+  { id: 'DEL-002', orderId: '#ORD-2024-005', date: new Date('2024-02-18'), customer: 'Ольга Смирнова', items: 7, address: 'г. Санкт-Петербург, пр. Невский, д. 88', phone: '+7 (999) 234-56-78' },
+  { id: 'DEL-003', orderId: '#ORD-2024-002', date: new Date('2024-02-20'), customer: 'Дмитрий Петров', items: 2, address: 'г. Казань, ул. Пушкина, д. 7, офис 301', phone: '+7 (999) 345-67-89', notes: 'Офисное здание, пропуск на ресепшн' },
+  { id: 'DEL-004', orderId: '#ORD-2024-008', date: new Date('2024-02-22'), customer: 'Игорь Лебедев', items: 3, address: 'г. Екатеринбург, ул. Малышева, д. 33', phone: '+7 (999) 456-78-90' },
 ];
 
 const mockOrders: Order[] = [
@@ -60,6 +64,21 @@ const Index = () => {
   const [maxAmount, setMaxAmount] = useState('');
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [deliveries] = useState<Delivery[]>(mockDeliveries);
+  const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false);
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
+
+  const handleDateSelect = (date: Date | undefined) => {
+    setSelectedDate(date);
+    if (date) {
+      const delivery = deliveries.find(d => 
+        d.date.toDateString() === date.toDateString()
+      );
+      if (delivery) {
+        setSelectedDelivery(delivery);
+        setIsDeliveryDialogOpen(true);
+      }
+    }
+  };
 
   const filteredOrders = orders.filter(order => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -150,7 +169,7 @@ const Index = () => {
               <Calendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={setSelectedDate}
+                onSelect={handleDateSelect}
                 className="rounded-lg border"
                 modifiers={{
                   delivery: deliveries.map(d => d.date)
@@ -166,7 +185,14 @@ const Index = () => {
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-muted-foreground">Предстоящие поставки:</p>
                 {deliveries.slice(0, 3).map((delivery) => (
-                  <div key={delivery.id} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 hover:shadow-md transition-all">
+                  <div 
+                    key={delivery.id} 
+                    onClick={() => {
+                      setSelectedDelivery(delivery);
+                      setIsDeliveryDialogOpen(true);
+                    }}
+                    className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50 hover:shadow-md transition-all cursor-pointer hover:scale-[1.02]"
+                  >
                     <div className="flex-1">
                       <p className="font-semibold text-sm">{delivery.customer}</p>
                       <p className="text-xs text-muted-foreground">{delivery.orderId}</p>
@@ -178,6 +204,90 @@ const Index = () => {
                   </div>
                 ))}
               </div>
+
+              <Dialog open={isDeliveryDialogOpen} onOpenChange={setIsDeliveryDialogOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Icon name="Truck" className="text-gradient-purple" size={24} />
+                      Детали поставки
+                    </DialogTitle>
+                  </DialogHeader>
+                  {selectedDelivery && (
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-gradient-to-r from-purple-50 to-pink-50">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Дата доставки</p>
+                            <p className="font-bold text-lg text-gradient-purple">
+                              {selectedDelivery.date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground mb-1">Номер заказа</p>
+                            <p className="font-mono font-semibold">{selectedDelivery.orderId}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <Icon name="User" className="text-muted-foreground mt-1" size={18} />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Клиент</p>
+                            <p className="font-semibold">{selectedDelivery.customer}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <Icon name="MapPin" className="text-muted-foreground mt-1" size={18} />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Адрес доставки</p>
+                            <p className="font-medium">{selectedDelivery.address}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <Icon name="Phone" className="text-muted-foreground mt-1" size={18} />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Телефон</p>
+                            <p className="font-medium">{selectedDelivery.phone}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <Icon name="Package" className="text-muted-foreground mt-1" size={18} />
+                          <div>
+                            <p className="text-xs text-muted-foreground">Количество товаров</p>
+                            <p className="font-semibold">{selectedDelivery.items} шт</p>
+                          </div>
+                        </div>
+
+                        {selectedDelivery.notes && (
+                          <div className="flex items-start gap-3">
+                            <Icon name="FileText" className="text-muted-foreground mt-1" size={18} />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Примечания</p>
+                              <p className="font-medium text-sm">{selectedDelivery.notes}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex gap-2 pt-4">
+                        <Button className="flex-1 bg-gradient-to-r from-gradient-purple to-gradient-magenta">
+                          <Icon name="Navigation" className="mr-2" size={16} />
+                          Маршрут
+                        </Button>
+                        <Button variant="outline" className="flex-1">
+                          <Icon name="Phone" className="mr-2" size={16} />
+                          Позвонить
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
 
