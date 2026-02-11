@@ -5,6 +5,7 @@ import StatisticsCards from '@/components/order-management/StatisticsCards';
 import DeliveryCalendar, { Delivery } from '@/components/order-management/DeliveryCalendar';
 import OrdersTable from '@/components/order-management/OrdersTable';
 import OrderDetailsDialog, { Order } from '@/components/order-management/OrderDetailsDialog';
+import CreateOrderDialog, { type OrderData } from '@/components/order-management/CreateOrderDialog';
 
 const mockDeliveries: Delivery[] = [
   { id: 'DEL-001', orderId: '#ORD-2024-003', date: new Date('2024-02-15'), time: '10:00', supplier: 'ООО "Поставщик-1"', items: 5, address: 'г. Москва, ул. Ленина, д. 15, кв. 42', phone: '+7 (999) 123-45-67', notes: 'Домофон 42К, звонить за час' },
@@ -33,6 +34,7 @@ const Index = () => {
   const [deliveries] = useState<Delivery[]>(mockDeliveries);
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isCreateOrderOpen, setIsCreateOrderOpen] = useState(false);
 
   const filteredOrders = orders.filter(order => {
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
@@ -59,6 +61,11 @@ const Index = () => {
     setIsOrderDetailsOpen(true);
   };
 
+  const handleCreateOrder = (orderData: OrderData) => {
+    console.log('Создан новый заказ:', orderData);
+    alert(`Заказ создан для ${orderData.supplier}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -69,7 +76,10 @@ const Index = () => {
             </h1>
             <p className="text-muted-foreground mt-2">Управление заказами в реальном времени</p>
           </div>
-          <Button className="bg-gradient-to-r from-gradient-purple to-gradient-magenta hover:opacity-90 transition-all hover:scale-105">
+          <Button 
+            className="bg-gradient-to-r from-gradient-purple to-gradient-magenta hover:opacity-90 transition-all hover:scale-105"
+            onClick={() => setIsCreateOrderOpen(true)}
+          >
             <Icon name="Plus" className="mr-2" size={18} />
             Новый заказ
           </Button>
@@ -102,6 +112,12 @@ const Index = () => {
           isOpen={isOrderDetailsOpen}
           onOpenChange={setIsOrderDetailsOpen}
           order={selectedOrder}
+        />
+
+        <CreateOrderDialog
+          isOpen={isCreateOrderOpen}
+          onOpenChange={setIsCreateOrderOpen}
+          onCreateOrder={handleCreateOrder}
         />
       </div>
     </div>
