@@ -6,6 +6,9 @@ import { Calendar } from '@/components/ui/calendar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import Icon from '@/components/ui/icon';
 
 interface Supplier {
@@ -32,6 +35,8 @@ export interface OrderData {
   nextDeliveryDate: Date | undefined;
   nextDeliveryTime: string;
   safetyStockDays: number;
+  revenueForecastAdjustment: number;
+  optimizeExternalCode: boolean;
   needs: {
     buns: number;
     patties: number;
@@ -111,6 +116,9 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
   const [nextDeliveryDate, setNextDeliveryDate] = useState<Date | undefined>();
   const [nextDeliveryTime, setNextDeliveryTime] = useState<string>('10:00');
   const [safetyStockDays, setSafetyStockDays] = useState<number>(1);
+  const [revenueForecastAdjustment, setRevenueForecastAdjustment] = useState<number>(0);
+  const [isRevenueChartOpen, setIsRevenueChartOpen] = useState(false);
+  const [optimizeExternalCode, setOptimizeExternalCode] = useState<boolean>(false);
   const [calculatedNeeds, setCalculatedNeeds] = useState<OrderData['needs'] | null>(null);
 
   const handleConfirmInventory = () => {
@@ -171,13 +179,16 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
       cola: 25
     };
 
+    // Применяем корректировку прогноза выручки
+    const adjustmentMultiplier = 1 + (revenueForecastAdjustment / 100);
+
     const needs = {
-      buns: Math.max(0, Math.ceil(dailyConsumption.buns * totalDays - mockInventory.items.buns)),
-      patties: Math.max(0, Math.ceil(dailyConsumption.patties * totalDays - mockInventory.items.patties)),
-      tomatoes: Math.max(0, Math.ceil(dailyConsumption.tomatoes * totalDays - mockInventory.items.tomatoes)),
-      cucumbers: Math.max(0, Math.ceil(dailyConsumption.cucumbers * totalDays - mockInventory.items.cucumbers)),
-      fries: Math.max(0, Math.ceil(dailyConsumption.fries * totalDays - mockInventory.items.fries)),
-      cola: Math.max(0, Math.ceil(dailyConsumption.cola * totalDays - mockInventory.items.cola))
+      buns: Math.max(0, Math.ceil(dailyConsumption.buns * totalDays * adjustmentMultiplier - mockInventory.items.buns)),
+      patties: Math.max(0, Math.ceil(dailyConsumption.patties * totalDays * adjustmentMultiplier - mockInventory.items.patties)),
+      tomatoes: Math.max(0, Math.ceil(dailyConsumption.tomatoes * totalDays * adjustmentMultiplier - mockInventory.items.tomatoes)),
+      cucumbers: Math.max(0, Math.ceil(dailyConsumption.cucumbers * totalDays * adjustmentMultiplier - mockInventory.items.cucumbers)),
+      fries: Math.max(0, Math.ceil(dailyConsumption.fries * totalDays * adjustmentMultiplier - mockInventory.items.fries)),
+      cola: Math.max(0, Math.ceil(dailyConsumption.cola * totalDays * adjustmentMultiplier - mockInventory.items.cola))
     };
 
     setCalculatedNeeds(needs);
@@ -192,6 +203,8 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
       nextDeliveryDate,
       nextDeliveryTime,
       safetyStockDays,
+      revenueForecastAdjustment,
+      optimizeExternalCode,
       needs: calculatedNeeds,
       inventoryDate: mockInventory.lastInventoryDate
     };
@@ -202,6 +215,10 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
     setSelectedSupplier(null);
     setSelectedDeliveryDates([]);
     setNextDeliveryDate(undefined);
+    setNextDeliveryTime('10:00');
+    setSafetyStockDays(1);
+    setRevenueForecastAdjustment(0);
+    setOptimizeExternalCode(false);
     setCalculatedNeeds(null);
     onOpenChange(false);
   };
@@ -214,6 +231,8 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
     setNextDeliveryDate(undefined);
     setNextDeliveryTime('10:00');
     setSafetyStockDays(1);
+    setRevenueForecastAdjustment(0);
+    setOptimizeExternalCode(false);
     setCalculatedNeeds(null);
   };
 
@@ -521,6 +540,100 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
                   </Card>
                 )}
 
+                {/* Корректировка прогноза выручки */}
+                {selectedDeliveryDates.length > 0 && nextDeliveryDate && (
+                  <Card className="border-2 border-green-200 bg-green-50/50">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Icon name="TrendingUp" className="text-green-600" size={18} />
+                          Скорректировать прогноз выручки
+                        </CardTitle>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setIsRevenueChartOpen(true)}
+                        >
+                          <Icon name="LineChart" className="mr-1" size={16} />
+                          График
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-xs text-muted-foreground">
+                        Настройте коэффициент для корректировки прогноза потребления
+                      </p>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Корректировка:</span>
+                          <Badge 
+                            variant="outline" 
+                            className={`font-mono text-base ${
+                              revenueForecastAdjustment > 0 ? 'bg-green-100 text-green-700' : 
+                              revenueForecastAdjustment < 0 ? 'bg-red-100 text-red-700' : 
+                              'bg-gray-100'
+                            }`}
+                          >
+                            {revenueForecastAdjustment > 0 ? '+' : ''}{revenueForecastAdjustment}%
+                          </Badge>
+                        </div>
+                        <Slider
+                          value={[revenueForecastAdjustment]}
+                          onValueChange={(value) => setRevenueForecastAdjustment(value[0])}
+                          min={-45}
+                          max={100}
+                          step={1}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>-45%</span>
+                          <span>0%</span>
+                          <span>+100%</span>
+                        </div>
+                      </div>
+                      <div className="p-2 bg-white rounded-lg">
+                        <p className="text-xs text-muted-foreground">
+                          {revenueForecastAdjustment === 0 && 'Используется базовый прогноз без корректировок'}
+                          {revenueForecastAdjustment > 0 && `Прогноз увеличен на ${revenueForecastAdjustment}% (ожидается рост спроса)`}
+                          {revenueForecastAdjustment < 0 && `Прогноз снижен на ${Math.abs(revenueForecastAdjustment)}% (ожидается спад спроса)`}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Оптимизация внешнего кода товара */}
+                {selectedDeliveryDates.length > 0 && nextDeliveryDate && (
+                  <Card className="border-2 border-blue-200 bg-blue-50/50">
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Icon name="Settings" className="text-blue-600" size={18} />
+                        Оптимизация заказа
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center space-x-3">
+                        <Checkbox 
+                          id="optimize-code" 
+                          checked={optimizeExternalCode}
+                          onCheckedChange={(checked) => setOptimizeExternalCode(checked as boolean)}
+                        />
+                        <div className="flex-1">
+                          <Label 
+                            htmlFor="optimize-code" 
+                            className="text-sm font-medium cursor-pointer"
+                          >
+                            Подобрать оптимальный внешний код товара
+                          </Label>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Система автоматически выберет наиболее выгодные артикулы с учетом цены и наличия у поставщика
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 {/* Расчет потребностей */}
                 {selectedDeliveryDates.length > 0 && nextDeliveryDate && (
                   <div className="space-y-4">
@@ -597,6 +710,76 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
             </Card>
           </div>
         )}
+
+        {/* Диалог с графиком прогноза */}
+        <Dialog open={isRevenueChartOpen} onOpenChange={setIsRevenueChartOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Icon name="LineChart" className="text-green-600" size={24} />
+                График факта и прогноза выручки
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg">
+                <p className="text-sm font-medium mb-2">Текущая корректировка: {revenueForecastAdjustment > 0 ? '+' : ''}{revenueForecastAdjustment}%</p>
+                <div className="h-64 bg-white rounded-lg border-2 border-green-200 flex items-center justify-center">
+                  <div className="text-center space-y-2">
+                    <Icon name="TrendingUp" className="mx-auto text-green-600" size={48} />
+                    <p className="text-sm text-muted-foreground">График прогноза выручки</p>
+                    <div className="flex items-center gap-4 justify-center text-xs">
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                        <span>Факт</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <div className="w-3 h-3 bg-green-500 rounded"></div>
+                        <span>Прогноз</span>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Визуализация будет добавлена при интеграции с реальными данными
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-3">
+                <Label>Корректировка прогноза</Label>
+                <Slider
+                  value={[revenueForecastAdjustment]}
+                  onValueChange={(value) => setRevenueForecastAdjustment(value[0])}
+                  min={-45}
+                  max={100}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>-45%</span>
+                  <Badge variant="outline" className="font-mono">
+                    {revenueForecastAdjustment > 0 ? '+' : ''}{revenueForecastAdjustment}%
+                  </Badge>
+                  <span>+100%</span>
+                </div>
+              </div>
+
+              <div className="p-3 bg-blue-50 rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  <Icon name="Info" className="inline mr-1" size={12} />
+                  График показывает фактическую выручку за прошлые периоды и прогноз на будущее с учетом сезонности и трендов
+                </p>
+              </div>
+
+              <Button 
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600"
+                onClick={() => setIsRevenueChartOpen(false)}
+              >
+                <Icon name="CheckCircle" className="mr-2" size={18} />
+                Применить
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
