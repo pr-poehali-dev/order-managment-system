@@ -114,9 +114,6 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
   const handleSelectSupplier = (supplierId: string) => {
     const supplier = mockSuppliers.find(s => s.id === supplierId);
     setSelectedSupplier(supplier || null);
-    if (supplier) {
-      setStep('calendar');
-    }
   };
 
   const handleDateSelect = (date: Date | undefined) => {
@@ -305,7 +302,7 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select onValueChange={handleSelectSupplier}>
+                <Select onValueChange={handleSelectSupplier} value={selectedSupplier?.id}>
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Выберите поставщика" />
                   </SelectTrigger>
@@ -318,10 +315,28 @@ const CreateOrderDialog = ({ isOpen, onOpenChange, onCreateOrder }: CreateOrderD
                   </SelectContent>
                 </Select>
 
+                {selectedSupplier && (
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg">
+                    <p className="text-sm font-medium mb-2">Выбранный поставщик:</p>
+                    <p className="text-lg font-bold text-gradient-blue">{selectedSupplier.name}</p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      График поставок: {selectedSupplier.deliveryDays.length} доступных дат
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex gap-3">
                   <Button variant="outline" onClick={() => setStep('inventory')}>
                     <Icon name="ArrowLeft" className="mr-2" size={18} />
                     Назад
+                  </Button>
+                  <Button 
+                    className="flex-1 bg-gradient-to-r from-gradient-purple to-gradient-magenta"
+                    onClick={() => setStep('calendar')}
+                    disabled={!selectedSupplier}
+                  >
+                    Продолжить
+                    <Icon name="ArrowRight" className="ml-2" size={18} />
                   </Button>
                 </div>
               </CardContent>
